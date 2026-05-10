@@ -1,0 +1,535 @@
+import mysql.connector
+import tkinter as tk
+from PIL import Image, ImageTk
+from tkinter import messagebox
+import sqlconnector
+
+root = tk.Tk()
+root.withdraw()
+
+tot = 0
+brand_product_map = {}
+prod = []
+b = None
+uid = ""
+l = []
+
+button_style = {
+    "font": ("Perandory Cond", 17),
+    "bg": "#ffc0cb",
+    "fg": "#000000",
+    "activebackground": "#ffb6c1",
+    "activeforeground": "#000000",
+    "relief": "groove",
+    "bd": 2,
+    "padx": 6,
+    "pady": 3,
+    "highlightthickness": 0,
+    "borderwidth": 2
+}
+
+button_style2 = {
+    "font": ("Perandory Cond", 17),
+    "bg": "#d77e5e",
+    "fg": "#000000",
+    "activebackground": "#ffb6c1",
+    "activeforeground": "#000000",
+    "relief": "groove",
+    "bd": 2,
+    "padx": 6,
+    "pady": 3,
+    "highlightthickness": 0,
+    "borderwidth": 2
+}
+
+
+def open_10():
+    s10 = tk.Toplevel()
+    s10.title("Home Page")
+    s10.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("11.png").resize((s10.winfo_screenwidth(), s10.winfo_screenheight())))
+    tk.Label(s10, image=bg).place(relwidth=1, relheight=1)
+    s10.bg = bg
+    tk.Button(s10, text="Return to Home Page", command=lambda: (s10.destroy(), open_1()), **button_style2).place(relx=0.66, rely=0.403, anchor='nw')
+    tk.Button(s10, text="No, Thanks", command=s10.destroy, **button_style2).place(relx=0.698, rely=0.49, anchor='nw')
+
+
+def feed(s9):
+    def submit_feedback():
+        feedback_text = feedback_entry.get("1.0", tk.END).strip()
+        if feedback_text:
+            try:
+                global uid
+                sqlconnector.feedback(uid, feedback_text)
+                messagebox.showinfo("Thank you!", "Your feedback has been submitted.")
+                popup.destroy()
+                s9.destroy()
+                open_10()
+            except Exception as e:
+                messagebox.showerror("Database Error", f"An error occurred: {e}")
+        else:
+            messagebox.showwarning("Empty Feedback", "Please enter your feedback before submitting.")
+
+    popup = tk.Toplevel()
+    popup.title("Enter Feedback")
+    popup.geometry("400x250")
+    popup.grab_set()
+    tk.Label(popup, text="Please enter your feedback:", font=("Arial", 12)).pack(pady=10)
+    feedback_entry = tk.Text(popup, height=6, width=40)
+    feedback_entry.pack(pady=5)
+    tk.Button(popup, text="Submit", command=submit_feedback, font=("Arial", 11), bg="#d77e5e", fg="#000").pack(pady=10)
+
+
+def open_9():
+    s9 = tk.Toplevel()
+    s9.title("Home Page")
+    s9.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("10.png").resize((s9.winfo_screenwidth(), s9.winfo_screenheight())))
+    tk.Label(s9, image=bg).place(relwidth=1, relheight=1)
+    s9.bg = bg
+    tk.Button(s9, text="Next", command=lambda: (s9.destroy(), open_10()), **button_style2).place(relx=0.88, rely=0.90, anchor='nw')
+    tk.Button(s9, text="Give Feedback", command=lambda: (feed(s9)), **button_style2).place(relx=0.06, rely=0.90, anchor='nw')
+
+
+def open_8():
+    s8 = tk.Toplevel()
+    s8.title("bill page")
+    s8.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("9.png").resize((s8.winfo_screenwidth(), s8.winfo_screenheight())))
+    tk.Label(s8, image=bg).place(relwidth=1, relheight=1)
+    s8.bg = bg
+
+    scroll_container = tk.Frame(s8, bg='#4f1104')
+    scroll_container.place(relx=0.08, rely=0.08, relwidth=0.8, relheight=0.55)
+
+    canvas = tk.Canvas(scroll_container, bg='#4f1104', highlightthickness=0)
+    canvas.pack(side="left", fill="both", expand=True)
+
+    scrollbar = tk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    table_frame = tk.Frame(canvas, bg='#4f1104')
+    canvas.create_window((0, 0), window=table_frame, anchor='nw')
+
+    def on_frame_configure(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    table_frame.bind("<Configure>", on_frame_configure)
+
+    headers = ['PRODUCT', 'COST', 'QUANTITY']
+    for col_index, header in enumerate(headers):
+        tk.Label(
+            table_frame,
+            text=header,
+            font=('Perandory Cond', 25),
+            fg='white',
+            bg='#4f1104',
+            padx=40,
+            pady=20
+        ).grid(row=0, column=col_index, sticky='w')
+
+    for row_index, row in enumerate(sample_items, start=1):
+        for col_index, item in enumerate(row):
+            tk.Label(
+                table_frame,
+                text=item,
+                font=('Helvetica', 16),
+                fg='white',
+                bg='#4f1104',
+                padx=40,
+                pady=10
+            ).grid(row=row_index, column=col_index, sticky='w')
+
+    for col_index in range(len(headers)):
+        table_frame.grid_columnconfigure(col_index, minsize=150)
+
+    next_button = tk.Button(s8, text="Next", command=lambda: (s8.destroy(), open_9()), **button_style2)
+    next_button.place(relx=0.84, rely=0.875, anchor='nw')
+
+    s = 0
+    for i in sample_items:
+        p = i[1] * i[2]
+        s += p
+
+    total_label = tk.Label(s8, text=f"₹{s:.2f}", font=('Helvetica', 16, 'bold'), bg='#4f1104', fg='white', padx=10, pady=5)
+    total_label.place(relx=0.57, rely=0.879)
+
+
+def open_cart_window(items):
+    cart_window = tk.Toplevel()
+    cart_window.title("Makeup Shop - Cart")
+    cart_window.geometry("1400x750")
+
+    bg_image = Image.open("12.png").resize((1400, 750))
+    bg_photo = ImageTk.PhotoImage(bg_image)
+    bg_label = tk.Label(cart_window, image=bg_photo)
+    bg_label.image = bg_photo
+    bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+    item_data = {name: {"price": price, "qty": qty} for name, price, qty in items}
+    qty_vars = {}
+    total_vars = {}
+    subtotal_var = tk.DoubleVar()
+
+    scroll_frame = tk.Frame(cart_window, bg="white", bd=2, relief="solid")
+    scroll_frame.place(relx=0.5, rely=0.45, anchor="center", width=700, height=350)
+
+    scroll_canvas = tk.Canvas(scroll_frame, bg='#ffffff', highlightthickness=0)
+    scroll_canvas.pack(side="left", fill="both", expand=True)
+
+    scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=scroll_canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    scroll_canvas.configure(yscrollcommand=scrollbar.set)
+
+    container = tk.Frame(scroll_canvas, bg="white")
+    scroll_canvas.create_window((0, 0), window=container, anchor="nw")
+
+    def on_frame_configure(event):
+        scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all"))
+
+    container.bind("<Configure>", on_frame_configure)
+
+    headers = ["Item", "Qty", "Price", "Total"]
+    i = 0
+    while i < len(headers):
+        tk.Label(container, text=headers[i], bg="white", font=("Arial", 10, "bold")).grid(row=0, column=i, padx=10, pady=10)
+        i += 1
+
+    def update_subtotal():
+        total = sum(item_data[name]["qty"] * item_data[name]["price"] for name in item_data)
+        subtotal_var.set(total)
+        subtotal_label.config(text=f"₹{total:.2f}")
+
+    def change_qty(name, delta):
+        qty = max(0, qty_vars[name].get() + delta)
+        qty_vars[name].set(qty)
+        item_data[name]["qty"] = qty
+        total_vars[name].set(qty * item_data[name]["price"])
+        update_subtotal()
+
+    row = 1
+    for name in item_data:
+        info = item_data[name]
+        tk.Label(container, text=name, bg="white").grid(row=row, column=0, padx=10, pady=5)
+
+        qty_var = tk.IntVar(value=info["qty"])
+        qty_vars[name] = qty_var
+
+        total_var = tk.DoubleVar(value=info["price"] * info["qty"])
+        total_vars[name] = total_var
+
+        qty_frame = tk.Frame(container, bg='#4f1104')
+        qty_frame.grid(row=row, column=1)
+        tk.Button(qty_frame, text="-", command=lambda n=name: change_qty(n, -1)).pack(side="left")
+        tk.Label(qty_frame, textvariable=qty_var, width=3, bg="white").pack(side="left")
+        tk.Button(qty_frame, text="+", command=lambda n=name: change_qty(n, 1)).pack(side="left")
+
+        tk.Label(container, text=f"₹{info['price']:.2f}", bg="white").grid(row=row, column=2)
+        tk.Label(container, textvariable=total_var, bg="white").grid(row=row, column=3)
+        row += 1
+
+    tk.Label(container, text="Subtotal:", font=("Arial", 12, "bold"), bg="white").grid(row=row, column=2, sticky="e", padx=5, pady=10)
+    subtotal_label = tk.Label(container, font=("Arial", 12), bg="white")
+    subtotal_label.grid(row=row, column=3, sticky="w", padx=5, pady=10)
+
+    def checkout_action():
+        global sample_items, total_price
+        sample_items = []
+        total_price = 0
+        global q
+        q = 0
+        for name in item_data:
+            price = item_data[name]["price"]
+            qty = item_data[name]["qty"]
+            if qty > 0:
+                sample_items.append((name, price, qty))
+                total_price += price * qty
+                q = q + qty
+        tid = sqlconnector.get_transaction_id()
+        sqlconnector.update_qty(q, total_price, tid)
+        messagebox.showinfo("Checkout", f"Your total is ₹{total_price:.2f}. Thank you for shopping!")
+        cart_window.destroy()
+        open_8()
+        if item_data == []:
+            messagebox.showinfo("No products selected")
+            cart_window.destroy()
+            open_5()
+
+    tk.Button(cart_window, text="Checkout", command=checkout_action, **button_style2).place(relx=0.86, rely=0.83, anchor='nw')
+    tk.Button(cart_window, text="Back", command=lambda: (cart_window.destroy(), open_5()), **button_style2).place(relx=0.866, rely=0.90, anchor='nw')
+
+    update_subtotal()
+
+sample_items = l
+
+
+def gotocart():
+    global brand_product_map, uid
+    if not brand_product_map:
+        messagebox.showwarning("No Items", "Your cart is empty!")
+        return
+    global l
+    transaction_lines = []
+    t_price = []
+    t_brand = []
+    total_quantity = 0
+    global total_price
+    total_price = 0
+
+    for brand, products in brand_product_map.items():
+        for product, price in products:
+            transaction_lines.append(f"{brand}: {product} - Rs.{price}")
+            t_brand.append(f"{brand}: {product}")
+            t_price.append(f"Rs.{price}")
+            t = (f"{brand}:{product}", float(price), 1)
+            l.append(t)
+            total_quantity += 1
+            total_price += price
+
+    transaction_str = "\n".join(transaction_lines)
+    a = list(brand_product_map.values())
+    sqlconnector.add(uid, transaction_str, total_quantity, total_price)
+    brand_product_map.clear()
+
+
+def save_transaction():
+    global b, prod, brand_product_map
+    if not prod:
+        messagebox.showwarning("Empty Cart", "No items selected to save.")
+        return
+    if b in brand_product_map:
+        brand_product_map[b].extend(prod)
+    else:
+        brand_product_map[b] = prod.copy()
+    prod.clear()
+
+
+def open_popup(item):
+    win = tk.Toplevel()
+    win.title(f"{item.capitalize()} Options")
+    options = {
+        "eyeliner": ["Black Eyeliner", "Blue Eyeliner", "Dark Green Eyeliner", "White Eyeliner", "Pink Chrome Eyeliner"],
+        "lipstick": ["Pink Lipstick", "Red Lipstick", "Dark Red Lipstick", "Crimson Red Lipstick", "Nude Lipstick"],
+        "blush": ["Pink Blush", "Red Blush", "Orange Blush", "Purple Blush", "Burgundy Blush"],
+        "foundation": ["Chestnut Foundation", "Tan Foundation", "Caramel Foundation", "Hazel Foundation", "Ollie Foundation"],
+        "lipgloss": ["Clear Lipgloss", "Pink Tinted Lipgloss", "Chocolate Lipgloss", "Berry Lipgloss", "Choco Mint Lipgloss"],
+        "eyeshadow": ["Metallic Eyeshadow Palette", "Pastel Eyeshadow Palette", "Liquid Eyeshadow", "Loose Glitter Eyeshadow", "Cream Eyeshadow"],
+    }
+
+    def add_product(opt):
+        global tot, b, prod
+        price = sqlconnector.getprice(b, opt)
+        if price is not None:
+            prod.append((opt, price))
+            tot += price
+
+    for option in options.get(item, []):
+        tk.Button(win, text=option, font=("Perandory Cond", 13), command=lambda opt=option: add_product(opt)).pack(pady=5)
+    tk.Button(win, text="Close", command=win.destroy).pack(pady=10)
+
+
+def open_6a():
+    s6a = tk.Toplevel()
+    s6a.title("Products")
+    s6a.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("6a.png").resize((s6a.winfo_screenwidth(), s6a.winfo_screenheight())))
+    tk.Label(s6a, image=bg).place(relwidth=1, relheight=1)
+    s6a.bg = bg
+    items = ["foundation", "eyeliner", "lipstick", "blush", "eyeshadow", "lipgloss"]
+    rel_positions = [(0.38, 0.401), (0.65, 0.41), (0.13, 0.401), (0.15, 0.835), (0.375, 0.835), (0.665, 0.835)]
+    for item, (rx, ry) in zip(items, rel_positions):
+        tk.Button(s6a, text=item.capitalize(), command=lambda i=item: open_popup(i), **button_style2).place(relx=rx, rely=ry, anchor='nw')
+    tk.Button(s6a, text="Go to Cart", command=lambda: (s6a.destroy(), save_transaction(), gotocart(), open_cart_window(sample_items)), **button_style2).place(relx=0.85, rely=0.80, anchor='nw')
+    tk.Button(s6a, text="Back", command=lambda: (save_transaction(), s6a.destroy(), open_5()), **button_style2).place(relx=0.87, rely=0.88, anchor='nw')
+
+
+def open_6b():
+    s6b = tk.Toplevel()
+    s6b.title("Products")
+    s6b.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("6b.png").resize((s6b.winfo_screenwidth(), s6b.winfo_screenheight())))
+    tk.Label(s6b, image=bg).place(relwidth=1, relheight=1)
+    s6b.bg = bg
+    items = ["foundation", "eyeliner", "lipstick", "blush", "eyeshadow", "lipgloss"]
+    rel_positions = [(0.38, 0.401), (0.65, 0.41), (0.13, 0.401), (0.15, 0.835), (0.375, 0.835), (0.665, 0.835)]
+    for item, (rx, ry) in zip(items, rel_positions):
+        tk.Button(s6b, text=item.capitalize(), command=lambda i=item: open_popup(i), **button_style2).place(relx=rx, rely=ry, anchor='nw')
+    tk.Button(s6b, text="Go to Cart", command=lambda: (s6b.destroy(), save_transaction(), gotocart(), open_cart_window(sample_items)), **button_style2).place(relx=0.85, rely=0.80, anchor='nw')
+    tk.Button(s6b, text="Back", command=lambda: (save_transaction(), s6b.destroy(), open_5()), **button_style2).place(relx=0.87, rely=0.88, anchor='nw')
+
+
+def open_6c():
+    s6c = tk.Toplevel()
+    s6c.title("Products")
+    s6c.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("6c.png").resize((s6c.winfo_screenwidth(), s6c.winfo_screenheight())))
+    tk.Label(s6c, image=bg).place(relwidth=1, relheight=1)
+    s6c.bg = bg
+    items = ["foundation", "eyeliner", "lipstick", "blush", "eyeshadow", "lipgloss"]
+    rel_positions = [(0.38, 0.401), (0.65, 0.41), (0.13, 0.401), (0.15, 0.835), (0.375, 0.835), (0.665, 0.835)]
+    for item, (rx, ry) in zip(items, rel_positions):
+        tk.Button(s6c, text=item.capitalize(), command=lambda i=item: open_popup(i), **button_style2).place(relx=rx, rely=ry, anchor='nw')
+    tk.Button(s6c, text="Go to Cart", command=lambda: (s6c.destroy(), save_transaction(), gotocart(), open_cart_window(sample_items)), **button_style2).place(relx=0.85, rely=0.80, anchor='nw')
+    tk.Button(s6c, text="Back", command=lambda: (save_transaction(), s6c.destroy(), open_5()), **button_style2).place(relx=0.87, rely=0.88, anchor='nw')
+
+
+def open_6d():
+    s6d = tk.Toplevel()
+    s6d.title("Products")
+    s6d.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("6d.png").resize((s6d.winfo_screenwidth(), s6d.winfo_screenheight())))
+    tk.Label(s6d, image=bg).place(relwidth=1, relheight=1)
+    s6d.bg = bg
+    items = ["foundation", "eyeliner", "lipstick", "blush", "eyeshadow", "lipgloss"]
+    rel_positions = [(0.38, 0.401), (0.65, 0.41), (0.13, 0.401), (0.15, 0.835), (0.375, 0.835), (0.665, 0.835)]
+    for item, (rx, ry) in zip(items, rel_positions):
+        tk.Button(s6d, text=item.capitalize(), command=lambda i=item: open_popup(i), **button_style2).place(relx=rx, rely=ry, anchor='nw')
+    tk.Button(s6d, text="Go to Cart", command=lambda: (s6d.destroy(), save_transaction(), gotocart(), open_cart_window(sample_items)), **button_style2).place(relx=0.85, rely=0.80, anchor='nw')
+    tk.Button(s6d, text="Back", command=lambda: (save_transaction(), s6d.destroy(), open_5()), **button_style2).place(relx=0.87, rely=0.88, anchor='nw')
+
+
+def open_6e():
+    s6e = tk.Toplevel()
+    s6e.title("Products")
+    s6e.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("6e.png").resize((s6e.winfo_screenwidth(), s6e.winfo_screenheight())))
+    tk.Label(s6e, image=bg).place(relwidth=1, relheight=1)
+    s6e.bg = bg
+    items = ["foundation", "eyeliner", "lipstick", "blush", "eyeshadow", "lipgloss"]
+    rel_positions = [(0.38, 0.401), (0.65, 0.41), (0.13, 0.401), (0.15, 0.835), (0.375, 0.835), (0.665, 0.835)]
+    for item, (rx, ry) in zip(items, rel_positions):
+        tk.Button(s6e, text=item.capitalize(), command=lambda i=item: open_popup(i), **button_style2).place(relx=rx, rely=ry, anchor='nw')
+    tk.Button(s6e, text="Go to Cart", command=lambda: (s6e.destroy(), save_transaction(), gotocart(), open_cart_window(sample_items)), **button_style2).place(relx=0.85, rely=0.80, anchor='nw')
+    tk.Button(s6e, text="Back", command=lambda: (save_transaction(), s6e.destroy(), open_5()), **button_style2).place(relx=0.87, rely=0.88, anchor='nw')
+
+
+def open_5():
+    global b, prod
+    s5 = tk.Toplevel()
+    s5.title("Brands")
+    s5.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("5.png").resize((s5.winfo_screenwidth(), s5.winfo_screenheight())))
+    tk.Label(s5, image=bg).place(relwidth=1, relheight=1)
+    s5.bg = bg
+
+    brands = ["Fenty Beauty", "Rare Beauty", "Haus Labs", "r.e.m Beauty", "rhode"]
+    rel_pos = [(0.1415, 0.52), (0.44, 0.678), (0.7339, 0.52), (0.1418, 0.895), (0.752, 0.895)]
+
+    for brand, (rx, ry) in zip(brands, rel_pos):
+        def on_brand_click(selected_brand=brand):
+            global b, prod
+            b = selected_brand
+            s5.destroy()
+            if b == "Fenty Beauty":
+                open_6a()
+            elif b == "rhode":
+                open_6b()
+            elif b == "Haus Labs":
+                open_6c()
+            elif b == "r.e.m Beauty":
+                open_6d()
+            else:
+                open_6e()
+        button = tk.Button(s5, text=brand, command=on_brand_click, **button_style2)
+        button.place(relx=rx, rely=ry, anchor='nw')
+
+
+def open_4():
+    global uid
+    s4 = tk.Toplevel()
+    s4.title("s4 Screen")
+    s4.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("4.png").resize((s4.winfo_screenwidth(), s4.winfo_screenheight())))
+    tk.Label(s4, image=bg).place(relwidth=1, relheight=1)
+    s4.bg = bg
+
+    uid_entry = tk.Entry(s4)
+    uid_entry.place(relx=0.8, rely=0.4, anchor='nw')
+    pass_entry = tk.Entry(s4, show="*")
+    pass_entry.place(relx=0.8, rely=0.66, anchor='nw')
+
+    def on_submit():
+        global uid
+        username = uid_entry.get()
+        password = pass_entry.get()
+        if sqlconnector.login(username, password) is None:
+            messagebox.showerror("User does not exist", "Username doesn't exist. Please signup.", parent=s4)
+            s4.destroy()
+            open_3()
+        else:
+            uid = username
+            messagebox.showinfo("Login Successful", f"Welcome, {username}!", parent=s4)
+            s4.destroy()
+            open_5()
+
+    tk.Button(s4, text="Submit", command=on_submit, **button_style2).place(relx=0.9, rely=0.85, anchor='nw')
+    tk.Button(s4, text="Back", command=lambda: (s4.destroy(), open_2()), **button_style2).place(relx=0.54, rely=0.85, anchor='nw')
+
+
+def open_3():
+    global uid
+    s3 = tk.Toplevel()
+    s3.title("Sign Up")
+    s3.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("3.png").resize((s3.winfo_screenwidth(), s3.winfo_screenheight())))
+    tk.Label(s3, image=bg).place(relwidth=1, relheight=1)
+    s3.bg = bg
+
+    phone_entry = tk.Entry(s3)
+    phone_entry.place(relx=0.83, rely=0.35, anchor='nw')
+    email_entry = tk.Entry(s3)
+    email_entry.place(relx=0.72, rely=0.53, anchor='nw')
+    uid_entry = tk.Entry(s3)
+    uid_entry.place(relx=0.77, rely=0.70, anchor='nw')
+    pass_entry = tk.Entry(s3, show="*")
+    pass_entry.place(relx=0.77, rely=0.88, anchor='nw')
+
+    def handle_signup():
+        global uid
+        phone = phone_entry.get()
+        email = email_entry.get()
+        username = uid_entry.get()
+        password = pass_entry.get()
+        if phone and email and username and password:
+            try:
+                if phone.isdigit() and len(phone) == 10:
+                    sqlconnector.signup(phone, email, username, password)
+                    uid = username
+                    messagebox.showinfo("Signup Successful", f"Welcome, {username}!")
+                    s3.destroy()
+                    open_5()
+                else:
+                    messagebox.showerror("Phone Number", "Please enter a 10-digit phone number.")
+            except Exception as e:
+                messagebox.showerror("Signup Failed", str(e))
+        else:
+            messagebox.showwarning("Incomplete", "Please fill all fields.")
+
+    tk.Button(s3, text="Submit", command=handle_signup, **button_style2).place(relx=0.89, rely=0.92, anchor='nw')
+    tk.Button(s3, text="Back", command=lambda: (s3.destroy(), open_2()), **button_style2).place(relx=0.03, rely=0.92, anchor='nw')
+
+
+def open_2():
+    s2 = tk.Toplevel()
+    s2.title("Home Page")
+    s2.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("2.png").resize((s2.winfo_screenwidth(), s2.winfo_screenheight())))
+    tk.Label(s2, image=bg).place(relwidth=1, relheight=1)
+    s2.bg = bg
+    tk.Button(s2, text="Login", command=lambda: (s2.destroy(), open_4()), **button_style2).place(relx=0.26, rely=0.78, anchor='nw')
+    tk.Button(s2, text="Sign Up", command=lambda: (s2.destroy(), open_3()), **button_style2).place(relx=0.25, rely=0.58, anchor='nw')
+
+
+def open_1():
+    s1 = tk.Toplevel()
+    s1.title("Home Page")
+    s1.attributes('-fullscreen', True)
+    bg = ImageTk.PhotoImage(Image.open("1.png").resize((s1.winfo_screenwidth(), s1.winfo_screenheight())))
+    tk.Label(s1, image=bg).place(relwidth=1, relheight=1)
+    s1.bg = bg
+    tk.Button(s1, text="Click to Shop", command=lambda: (s1.destroy(), open_2()), **button_style2).place(relx=0.44, rely=0.88, anchor='nw')
+
+
+open_1()
+root.mainloop()
